@@ -21,8 +21,6 @@ def encode(tokenizer, prompt, tokens_to_generate=0, add_special_tokens=True):
 def decode(tokenizer, output_ids):
     reply = tokenizer.decode(output_ids, skip_special_tokens=True)
     reply = reply.replace(r'<|endoftext|>', '')
-    if reply.startswith(' '): # ?????? fix for decoder output starting with ' '?
-        reply = reply.lstrip()
     return reply
 
 def overlapped_string_length(s1, s2):
@@ -172,16 +170,10 @@ async def generate_reply(model, tokenizer, question, max_new_tokens, do_sample, 
 
     input_ids = encode(tokenizer, question, max_new_tokens)
     original_input_ids = input_ids
-    output = input_ids[0]
     eos_token_ids = [tokenizer.eos_token_id] if tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
     
-    # if stopping_string is not None:
-    #     # Copied from https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
-    #     t = encode(tokenizer, stopping_string, 0, add_special_tokens=False)
-    #     stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
-
     generate_params = {
         'use_cache': True, # not shared.args.no_cache,
         "max_new_tokens": max_new_tokens,
@@ -206,13 +198,13 @@ async def generate_reply(model, tokenizer, question, max_new_tokens, do_sample, 
     yield question
     clear_torch_cache()
 
-    async for output in generate_tokens(model, generate_params):
-        reply = decode(tokenizer, output)
+    prompt_tokens = list(input_ids[0].cpu())
 
+    async for output in generate_tokens(model, generate_params):
         # delete stuff in the reply that came from the question
-        new_reply = reply[overlapped_string_length(question, reply):]
-        if reply.startswith(question):
-            assert new_reply == reply[len(question):]
+        new_output = output[overlapped_string_length(prompt_tokens, list(output)):]
+
+        new_reply = decode(tokenizer, new_output)
 
         yield question + new_reply
         if output[-1] in eos_token_ids:

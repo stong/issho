@@ -63,6 +63,12 @@ function Textgen() {
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const websocketRef = useRef(null);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToBottom = () => {
+    textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+  };
+
   // this is a dumb hack
   useEffect(() => {
     (async () => {
@@ -74,74 +80,84 @@ function Textgen() {
     })();
   }, []);
 
+  // this too
+  const [didInitialScroll, setDidInitialScroll] = useState(false);
+  useEffect(() => {
+    if (value != "" && !didInitialScroll) {
+      scrollToBottom();
+      setDidInitialScroll(true);
+    }
+  }, [value]);
+
   const connectWebsocket = () => {
-     const currentUrl = new URL(window.location.href);
-     currentUrl.protocol = currentUrl.protocol == 'https:' ? 'wss:' : 'ws:';
-     currentUrl.pathname = '/ws';
-     const socketUrl = currentUrl.toString();
-     console.log(socketUrl);
-     websocketRef.current = new WebSocket(socketUrl);
+    const currentUrl = new URL(window.location.href);
+    currentUrl.protocol = currentUrl.protocol == 'https:' ? 'wss:' : 'ws:';
+    currentUrl.pathname = '/ws';
+    const socketUrl = currentUrl.toString();
+    console.log(socketUrl);
+    websocketRef.current = new WebSocket(socketUrl);
 
-     const handleOpen = (event) => {
-       console.log('WebSocket connection opened:', event);
-       setConnectionStatus('connected');
-       notifications.show({
-         title: 'Server status',
-         message: 'Connected',
-         icon: <IconCheck />,
-       })
-     };
+    const handleOpen = (event) => {
+      console.log('WebSocket connection opened:', event);
+      setConnectionStatus('connected');
+      notifications.show({
+        title: 'Server status',
+        message: 'Connected',
+        icon: <IconCheck />,
+      })
+    };
 
-     const handleMessage = (event) => {
-       console.log('WebSocket message received:', event);
-       const parsedData = JSON.parse(event.data);
-       if (parsedData.status === "set_state") {
-         setBackendState(parsedData.new_state);
-       } else if (parsedData.status === "error") {
-         setWasError(true);
-         notifications.show({
-           title: 'Error',
-           message: parsedData.message
-         });
-       } else if (parsedData.status === "progress") {
-         setValue(parsedData.completion);
-       } else if (parsedData.status === "notification") {
-         notifications.show({
-           title: 'Notification',
-           message: parsedData.message
-         })
-       } else if (parsedData.status === "cooldown_timer") {
-         setCooldownTimer(parsedData.seconds_remaining);
-       }
-     };
+    const handleMessage = (event) => {
+      console.log('WebSocket message received:', event);
+      const parsedData = JSON.parse(event.data);
+      if (parsedData.status === "set_state") {
+        setBackendState(parsedData.new_state);
+      } else if (parsedData.status === "error") {
+        setWasError(true);
+        notifications.show({
+          title: 'Error',
+          message: parsedData.message
+        });
+      } else if (parsedData.status === "progress") {
+        setValue(parsedData.completion);
+        scrollToBottom();
+      } else if (parsedData.status === "notification") {
+        notifications.show({
+          title: 'Notification',
+          message: parsedData.message
+        })
+      } else if (parsedData.status === "cooldown_timer") {
+        setCooldownTimer(parsedData.seconds_remaining);
+      }
+    };
 
-     const handleClose = (event) => {
-       console.log('WebSocket connection closed:', event);
-       setBackendState('idle');
-       if (backendState === 'connected') {
-         notifications.show({
-           title: 'Server status',
-           message: 'Disconnected',
-           icon: <IconX />,
-           color: 'red'
-         });
-       }
-       setConnectionStatus('disconnected');
-       setTimeout(connectWebsocket, 5000);
-     };
+    const handleClose = (event) => {
+      console.log('WebSocket connection closed:', event);
+      setBackendState('idle');
+      if (backendState === 'connected') {
+        notifications.show({
+          title: 'Server status',
+          message: 'Disconnected',
+          icon: <IconX />,
+          color: 'red'
+        });
+      }
+      setConnectionStatus('disconnected');
+      setTimeout(connectWebsocket, 5000);
+    };
 
-     const handleError = (event) => {
-       websocketRef.current.close();
-       console.error('WebSocket error:', event);
-       setConnectionStatus('disconnected');
-       setBackendState('idle');
-     };
+    const handleError = (event) => {
+      websocketRef.current.close();
+      console.error('WebSocket error:', event);
+      setConnectionStatus('disconnected');
+      setBackendState('idle');
+    };
 
-     websocketRef.current.addEventListener('open', handleOpen);
-     websocketRef.current.addEventListener('message', handleMessage);
-     websocketRef.current.addEventListener('close', handleClose);
-     websocketRef.current.addEventListener('error', handleError);
-   }
+    websocketRef.current.addEventListener('open', handleOpen);
+    websocketRef.current.addEventListener('message', handleMessage);
+    websocketRef.current.addEventListener('close', handleClose);
+    websocketRef.current.addEventListener('error', handleError);
+  };
 
   useEffect(() => {
     connectWebsocket();
@@ -189,6 +205,7 @@ function Textgen() {
           value={value}
           error={wasError}
           onChange={(event) => setValue(event.currentTarget.value)}
+          ref={textareaRef}
         />
 
         <Group grow>
