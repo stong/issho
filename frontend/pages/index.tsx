@@ -352,6 +352,10 @@ export default function Home() {
         <meta name="description" content="An open-source creative writing assistant!" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta property="og:image" content="https://issho.ai/anime.png" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Issho" />
+        <meta name="twitter:description" content="An open-source creative writing assistant!" />
+        <meta name="twitter:image" content="https://issho.ai/anime.png" />
         <link rel="icon" href="/favicon.ico" />
         <script defer data-domain="issho.ai" src="https://plausible.io/js/script.js"></script>
       </Head>
