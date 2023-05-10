@@ -324,6 +324,7 @@ function Textgen() {
             <Text>- Generated text is NOT stored on the server. We do NOT store your generations.</Text>
             <Text>- We do not share your data.</Text>
             <Text>- You are welcome to use privacy enhancing technologies like VPNs or Tor.</Text>
+            <Text>- <a href="https://github.com/stong/issho">Source code</a></Text>
             </Accordion.Panel>
           </Accordion.Item>
           <Accordion.Item value="terms">
