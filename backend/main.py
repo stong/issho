@@ -9,8 +9,8 @@ import GPTQ_loader
 import text_generation
 import torch
 
-if len(sys.argv) < 2:
-    print('usage: %s <model-name>' % sys.argv[0])
+if len(sys.argv) < 3:
+    print('usage: %s <model-name> <path-to-pt-or-safetensors>' % sys.argv[0])
     exit(1)
 
 torch.set_num_threads(12) # todo use nproc
@@ -19,10 +19,11 @@ torch.get_num_threads()
 class Settings:
     def __init__(self):
         self.model_name = sys.argv[1]
+        self.pt_path = sys.argv[2]
 
 settings = Settings()
 
-model = GPTQ_loader.load_quantized(settings.model_name, gptq_bits=4)#, gptq_pre_layer=60)
+model = GPTQ_loader.load_quantized(f'models/{settings.model_name}/', settings.pt_path, gptq_bits=4)#, gptq_pre_layer=60)
 tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{settings.model_name}/"))
 tokenizer.truncation_side = 'left'
 

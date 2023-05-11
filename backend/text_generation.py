@@ -200,6 +200,7 @@ async def generate_reply(model, tokenizer, question, max_new_tokens, do_sample, 
 
     prompt_tokens = list(input_ids[0].cpu())
 
+    output = input_ids[0] # in case for loop returns nothing
     async for output in generate_tokens(model, generate_params):
         # delete stuff in the reply that came from the question
         new_output = output[overlapped_string_length(prompt_tokens, list(output)):]

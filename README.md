@@ -32,19 +32,21 @@ yarn build && yarn start # prod build
 
 Dependencies
 
-```
+```bash
 sudo apt install build-essential
 git submodule update --init --recursive
 conda create -n textgen python=3.10.9
 conda activate textgen
 mamba install pytorch-cuda=11.8 -c pytorch -c nvidia
-mamba install -c conda-forge cudatoolkit-dev
-pip install -r requirements.txt # note: tested with transformers @ git+https://github.com/huggingface/transformers@fb366b9a2a94b38171896f6ba9fb9ae8bffd77af
+mamba install -c "nvidia/label/cuda-11.8.0" cuda-toolkit # nvcc should be version 11.8
+cd repositories/GPTQ-for-LLaMa
+python setup_cuda.py install
+pip install -r requirements.txt
 ```
 
 Models (example: LLaMA 30B 4bit)
 
-```
+```bash
 mkdir models/
 cd models/
 wget https://raw.githubusercontent.com/qwopqwop200/GPTQ-for-LLaMa/triton/convert_llama_weights_to_hf.py
